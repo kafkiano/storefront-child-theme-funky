@@ -42,3 +42,58 @@ Multiple Waves
 
 You can add these svg anywhere you want, for example to go to Customizer --> Widgets --> Below Header.
 Don't forget to add
+
+# Theme Color System Usage Guide
+
+## Overview
+This child theme implements a comprehensive color system that exposes all Storefront customizer colors as CSS variables.
+
+## Available CSS Variables
+- `--storefront-accent-color`: Primary accent/link color
+- `--storefront-background-color`: Content background color
+- `--storefront-text-color`: Primary text color
+- `--storefront-heading-color`: Heading color
+- `--storefront-header-background-color`: Header background color
+- `--storefront-header-text-color`: Header text color
+- `--storefront-header-link-color`: Header navigation link color
+- `--storefront-hero-heading-color`: Hero heading color
+- `--storefront-hero-text-color`: Hero text color
+- `--storefront-footer-background-color`: Footer background color
+- `--storefront-footer-heading-color`: Footer heading color
+- `--storefront-footer-text-color`: Footer text color
+- `--storefront-footer-link-color`: Footer link color
+- `--storefront-button-background-color`: Button background color
+- `--storefront-button-text-color`: Button text color
+- `--storefront-button-alt-background-color`: Alternate button background color
+- `--storefront-button-alt-text-color`: Alternate button text color
+
+## Usage in CSS
+```css
+.element {
+    background-color: var(--storefront-accent-color, #7f54b3);
+    color: var(--storefront-button-text-color, #ffffff);
+}
+```
+
+## PHP Functions
+- `funky_get_theme_colors()`: Get all colors as associative array
+- `funky_get_cached_theme_colors()`: Cached version for performance
+- `funky_get_color_variable_map()`: PHP to CSS variable mapping
+- `funky_get_storefront_default()`: Get Storefront's default color values
+
+## Caching
+Color values are cached for 12 hours. Cache clears automatically when theme mods change via the `customize_save_after` hook.
+
+## Filters
+- `funky_theme_colors`: Filter the theme colors array before caching.
+
+## Example: Extending Colors
+```php
+add_filter('funky_theme_colors', function($colors) {
+    $colors['custom_color'] = '#ff0000';
+    return $colors;
+});
+```
+
+## Notes
+- PHP‑CSS coupling is abstracted behind a mapping layer for maintainability.
