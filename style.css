@@ -39,7 +39,11 @@ h1, h2, h3, .nav-menu li a, .site-header span  {
     margin-bottom: 0 !important;
 }
 
-/* Center site branding (handled by three-column layout) */
+/* Site branding overrides */
+.site-branding {
+    width: 100% !important;
+    margin: 0 !important;
+}
 
 /* Three-Column Header Layout */
 .header-three-column-grid {
@@ -54,7 +58,7 @@ h1, h2, h3, .nav-menu li a, .site-header span  {
     flex: 1;
     display: flex;
     align-items: center;
-    min-height: 60px; /* Match logo height */
+    min-height: 60px;
 }
 
 .header-column-left {
