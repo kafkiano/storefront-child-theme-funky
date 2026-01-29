@@ -39,6 +39,22 @@ h1, h2, h3, .nav-menu li a, .site-header span  {
     margin-bottom: 0 !important;
 }
 
+/* Center site branding */
+.woocommerce-active .site-header .site-branding {
+    width: 100%;
+    margin-right: 0;
+}
+.woocommerce-active .site-header .site-branding .custom-logo-link img {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Default storefront mobile nav overrides */
+.main-navigation ul.menu, 
+.main-navigation ul.nav-menu {
+  margin-left: 0 !important;
+}
+
 /* --------------- Shop Customization ----------------- */
 .site-header-cart .cart-contents:after,
 .storefront-handheld-footer-bar ul li.cart > a:before {
@@ -50,14 +66,9 @@ h1, h2, h3, .nav-menu li a, .site-header span  {
   margin-right: auto !important;
 }
 
-/* --------------- Image Rounding ----------------- */
+/* Image Rounding */
 .wc-block-components-product-image.wc-block-grid__product-image.wp-block-woocommerce-product-image {
     border-radius: var(--radius) !important;
-}
-
-/* --------------- Default Mobile Navigation ----------------- */
-.storefront-handheld-footer-bar ul li.home > a:before {
-	content: "\f015";
 }
 
 /* --------------- Off-Canvas Menu ----------------- */
@@ -73,13 +84,6 @@ button.menu-toggle {
     .menu-toggle {
         display: block;
     }
-    .primary-navigation {
-        display: none;
-    }
-    /* Adjust off-canvas width for desktop */
-    .main-navigation .menu:last-child {
-        width: 350px;
-    }
 }
 
 /* Off-canvas container */
@@ -87,12 +91,33 @@ button.menu-toggle {
     position: relative;
 }
 
-/* Target handheld navigation container for off-canvas */
-.main-navigation .menu:last-child {
-    position: fixed ;
+/* Off-canvas overlay - pure CSS solution */
+.off-canvas-overlay {
+    position: fixed;
     top: 0;
-    left: -300px; /* Hidden off-screen */
-    width: 300px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    cursor: pointer;
+}
+
+/* When navigation is toggled, show overlay with fade */
+.main-navigation.toggled .off-canvas-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Target off-canvas menu */
+.off-canvas-menu {
+    position: fixed;
+    top: 0;
+    left: -20vw;
+    width: 20vw;
     height: 100vh;
     background: var(--storefront-header-background-color, #ffffff);
     z-index: 999;
@@ -105,57 +130,30 @@ button.menu-toggle {
     overflow: hidden;
 }
 
-/* Menu items */
-.main-navigation ul li {
+@media (max-width: 768px) {
+    .off-canvas-menu {
+        left: -50vw;
+        width: 50vw;
+    }
+}
+
+/* Menu Items */
+.off-canvas-menu ul li {
     display: block;
 }
 
-.main-navigation ul li a {
+.off-canvas-menu ul li a {
     padding-left: 1em;
     padding-right: 1em;
 }
 
-/* Override storefront's default max-height transition */
-.handheld-navigation,
-.nav-menu,
-.main-navigation div.menu > ul:not(.nav-menu) {
-    max-height: 100vh;
-    overflow: visible;
-    transition: left 0.3s ease;
-}
-
 /* When toggled, slide in */
-.main-navigation.toggled .handheld-navigation,
-.main-navigation.toggled .menu:last-child,
-#site-navigation.toggled .menu:last-child,
-.main-navigation.toggled .nav-menu {
+.main-navigation.toggled .off-canvas-menu {
     left: 0;
 }
 
-/* Overlay backdrop */
-.main-navigation.toggled .off-canvas-overlay {
-    display: block;
-}
-
-.off-canvas-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 998;
-    cursor: pointer;
-}
-
-/* Hide primary navigation menu (first .menu div) */
-.main-navigation .menu:first-child {
-    display: none;
-}
-
-/* Ensure handheld navigation (last .menu div) is visible when toggled */
-.main-navigation.toggled .menu:last-child {
+/* Ensure off-canvas menu is visible when toggled */
+.main-navigation.toggled .off-canvas-menu {
     display: block;
 }
 
@@ -181,7 +179,7 @@ button,
 }
 
 /* --------------- Links ----------------- */
-.hentry .entry-content a {
+.entry .entry-content a {
     text-decoration: none;
 }
 

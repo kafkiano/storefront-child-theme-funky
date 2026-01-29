@@ -231,37 +231,6 @@ function get_site_logo_schema() {
     }
 }
 
-// Modify Mobile Navigation
-
-// Remove default links
-// add_filter( 'storefront_handheld_footer_bar_links', 'jk_remove_handheld_footer_links' );
-// function jk_remove_handheld_footer_links( $links ) {
-// 	unset( $links['my-account'] );
-// 	unset( $links['search'] );
-// 	unset( $links['cart'] );
-
-// 	return $links;
-// }
-
-// // Add custom links
-// add_filter( 'storefront_handheld_footer_bar_links', 'jk_add_home_link' );
-// function jk_add_home_link( $links ) {
-// 	$new_links = array(
-// 		'home' => array(
-// 			'priority' => 10,
-// 			'callback' => 'jk_home_link',
-// 		),
-// 	);
-
-// 	$links = array_merge( $new_links, $links );
-
-// 	return $links;
-// }
-
-// function jk_home_link() {
-// 	echo '<a href="' . esc_url( home_url( '/' ) ) . '">' . __( 'Home' ) . '</a>';
-// }
-
 /**
  * Returns Storefront color settings with proper # prefix.
  *
@@ -422,6 +391,31 @@ function funky_get_storefront_default($color_key) {
     );
     
     return isset($defaults[$color_key]) ? $defaults[$color_key] : '#ffffff';
+}
+
+/**
+ * Override Storefront's primary navigation to output only handheld menu
+ * when off-canvas mode is active, eliminating duplicate menu elements
+ */
+if ( ! function_exists( 'storefront_primary_navigation' ) ) {
+    function storefront_primary_navigation() {
+        ?>
+        <nav id="site-navigation" class="main-navigation" role="navigation" aria-label="<?php esc_attr_e( 'Primary Navigation', 'storefront' ); ?>">
+          <button id="site-navigation-menu-toggle" class="menu-toggle" aria-controls="site-navigation" aria-expanded="false"><span><?php echo esc_html( apply_filters( 'storefront_menu_toggle_text', __( 'Menu', 'storefront' ) ) ); ?></span></button>
+            <?php
+            // Output only handheld navigation for off-canvas menu
+            wp_nav_menu(
+                array(
+                    'theme_location'  => 'handheld',
+                    'container_class' => 'handheld-navigation',
+                    'menu_class'      => 'off-canvas-menu', // Add semantic class
+                )
+            );
+            ?>
+          <div class="off-canvas-overlay" aria-hidden="false" role="presentation"></div>
+        </nav><!-- #site-navigation -->
+        <?php
+    }
 }
 
 /*
