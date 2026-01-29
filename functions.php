@@ -461,7 +461,8 @@ function funky_primary_navigation() {
     ?>
     <nav id="site-navigation" class="main-navigation" role="navigation" aria-label="Primary Navigation">
         <button id="site-navigation-menu-toggle" class="menu-toggle" aria-controls="site-navigation" aria-expanded="false">
-            <span><?php echo esc_html( apply_filters( 'storefront_menu_toggle_text', __( 'Menu', 'storefront' ) ) ); ?></span>
+            <i class="fa fa-bars" aria-hidden="true"></i>
+            <span class="screen-reader-text"><?php echo esc_html( apply_filters( 'storefront_menu_toggle_text', __( 'Menu', 'storefront' ) ) ); ?></span>
         </button>
         <?php
         // Off-canvas menu structure (keeps existing off-canvas implementation)

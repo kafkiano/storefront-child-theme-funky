@@ -147,6 +147,47 @@ button.menu-toggle {
     }
 }
 
+/* Font Awesome hamburger icon styling */
+.menu-toggle .fa-bars {
+    font-size: 1.5em;
+    line-height: 1;
+    color: currentColor;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Override parent theme pseudo-elements */
+.menu-toggle:before,
+.menu-toggle:after {
+    display: none !important;
+}
+
+/* Hide screen reader text */
+.menu-toggle .screen-reader-text {
+    border: 0;
+    clip: rect(1px, 1px, 1px, 1px);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+    word-wrap: normal !important;
+}
+
+/* Ensure button has proper dimensions */
+.menu-toggle {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5em !important;
+    max-width: none !important;
+    float: none !important;
+}
+
 /* Off-canvas container */
 .main-navigation {
     position: relative;
