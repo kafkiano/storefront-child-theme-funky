@@ -13,6 +13,30 @@ function funky_enqueue_styles() {
         array('storefront-style'),
         wp_get_theme()->get('Version')
     );
+
+    // Inject color variables as inline CSS
+    $colors = funky_get_cached_theme_colors();
+    $variable_map = funky_get_color_variable_map();
+
+    if (!empty($colors) && !empty($variable_map)) {
+        $css = ':root {';
+        foreach ($variable_map as $php_key => $css_var) {
+            if (isset($colors[$php_key])) {
+                $css .= sprintf('--storefront-%s: %s;', $css_var, $colors[$php_key]);
+            }
+        }
+        $css .= '}';
+        wp_add_inline_style('storefront-child-style', $css);
+    }
+
+    // Off-canvas menu JavaScript
+    wp_enqueue_script(
+        'storefront-child-off-canvas',
+        get_stylesheet_directory_uri() . '/assets/js/off-canvas-menu.js',
+        array(), // no dependencies
+        wp_get_theme()->get('Version'),
+        true // load in footer
+    );
 }
 
 // Tell WP you support editor styles
@@ -210,36 +234,198 @@ function get_site_logo_schema() {
 // Modify Mobile Navigation
 
 // Remove default links
-add_filter( 'storefront_handheld_footer_bar_links', 'jk_remove_handheld_footer_links' );
-function jk_remove_handheld_footer_links( $links ) {
-	unset( $links['my-account'] );
-	unset( $links['search'] );
-	unset( $links['cart'] );
+// add_filter( 'storefront_handheld_footer_bar_links', 'jk_remove_handheld_footer_links' );
+// function jk_remove_handheld_footer_links( $links ) {
+// 	unset( $links['my-account'] );
+// 	unset( $links['search'] );
+// 	unset( $links['cart'] );
 
-	return $links;
-}
+// 	return $links;
+// }
 
-// Add custom links
-add_filter( 'storefront_handheld_footer_bar_links', 'jk_add_home_link' );
-function jk_add_home_link( $links ) {
-	$new_links = array(
-		'home' => array(
-			'priority' => 10,
-			'callback' => 'jk_home_link',
-		),
+// // Add custom links
+// add_filter( 'storefront_handheld_footer_bar_links', 'jk_add_home_link' );
+// function jk_add_home_link( $links ) {
+// 	$new_links = array(
+// 		'home' => array(
+// 			'priority' => 10,
+// 			'callback' => 'jk_home_link',
+// 		),
+// 	);
+
+// 	$links = array_merge( $new_links, $links );
+
+// 	return $links;
+// }
+
+// function jk_home_link() {
+// 	echo '<a href="' . esc_url( home_url( '/' ) ) . '">' . __( 'Home' ) . '</a>';
+// }
+
+/**
+ * Returns Storefront color settings with proper # prefix.
+ *
+ * @return array {
+ *     @type string $accent_color           Accent/link color (with #).
+ *     @type string $background_color       Background color (with #).
+ *     @type string $header_link_color      Navigation link color (with #).
+ *     @type string $heading_color          Heading color (with #).
+ *     @type string $text_color             Text color (with #).
+ *     @type string $hero_heading_color     Hero heading color (with #).
+ *     @type string $hero_text_color        Hero text color (with #).
+ *     @type string $header_background_color Header background color (with #).
+ *     @type string $header_text_color      Header text color (with #).
+ *     @type string $footer_background_color Footer background color (with #).
+ *     @type string $footer_heading_color   Footer heading color (with #).
+ *     @type string $footer_text_color      Footer text color (with #).
+ *     @type string $footer_link_color      Footer link color (with #).
+ *     @type string $button_background_color Button background color (with #).
+ *     @type string $button_text_color      Button text color (with #).
+ *     @type string $button_alt_background_color Alternate button background (with #).
+ *     @type string $button_alt_text_color  Alternate button text (with #).
+ * }
+ */
+function funky_get_theme_colors() {
+	// Use Storefront's built-in function if available
+	if (function_exists('storefront_get_content_background_color')) {
+		$background_color = storefront_get_content_background_color();
+	} else {
+		$bg_value = get_theme_mod('background_color', 'ffffff');
+		$background_color = $bg_value ? '#' . ltrim($bg_value, '#') : '#ffffff';
+	}
+	
+	// Map Storefront theme mods to our array with descriptive keys
+	$colors = array(
+		'accent_color'           => get_theme_mod('storefront_accent_color', funky_get_storefront_default('storefront_accent_color')),
+		'background_color'       => $background_color,
+		'header_link_color'      => get_theme_mod('storefront_header_link_color', funky_get_storefront_default('storefront_header_link_color')),
+		'heading_color'          => get_theme_mod('storefront_heading_color', funky_get_storefront_default('storefront_heading_color')),
+		'text_color'             => get_theme_mod('storefront_text_color', funky_get_storefront_default('storefront_text_color')),
+		'hero_heading_color'     => get_theme_mod('storefront_hero_heading_color', funky_get_storefront_default('storefront_hero_heading_color')),
+		'hero_text_color'        => get_theme_mod('storefront_hero_text_color', funky_get_storefront_default('storefront_hero_text_color')),
+		'header_background_color' => get_theme_mod('storefront_header_background_color', funky_get_storefront_default('storefront_header_background_color')),
+		'header_text_color'      => get_theme_mod('storefront_header_text_color', funky_get_storefront_default('storefront_header_text_color')),
+		'footer_background_color' => get_theme_mod('storefront_footer_background_color', funky_get_storefront_default('storefront_footer_background_color')),
+		'footer_heading_color'   => get_theme_mod('storefront_footer_heading_color', funky_get_storefront_default('storefront_footer_heading_color')),
+		'footer_text_color'      => get_theme_mod('storefront_footer_text_color', funky_get_storefront_default('storefront_footer_text_color')),
+		'footer_link_color'      => get_theme_mod('storefront_footer_link_color', funky_get_storefront_default('storefront_footer_link_color')),
+		'button_background_color' => get_theme_mod('storefront_button_background_color', funky_get_storefront_default('storefront_button_background_color')),
+		'button_text_color'      => get_theme_mod('storefront_button_text_color', funky_get_storefront_default('storefront_button_text_color')),
+		'button_alt_background_color' => get_theme_mod('storefront_button_alt_background_color', funky_get_storefront_default('storefront_button_alt_background_color')),
+		'button_alt_text_color'  => get_theme_mod('storefront_button_alt_text_color', funky_get_storefront_default('storefront_button_alt_text_color')),
 	);
-
-	$links = array_merge( $new_links, $links );
-
-	return $links;
+	
+	// Ensure all values have # prefix
+	foreach ($colors as $key => $value) {
+		if ($value && strpos($value, '#') !== 0) {
+			$colors[$key] = '#' . $value;
+		}
+	}
+	
+	/**
+	 * Filter the theme colors array.
+	 *
+	 * @param array $colors Associative array of color values.
+	 */
+	return apply_filters('funky_theme_colors', $colors);
 }
 
-function jk_home_link() {
-	echo '<a href="' . esc_url( home_url( '/' ) ) . '">' . __( 'Home' ) . '</a>';
+/**
+	* Get Storefront theme colors with transient caching.
+	*
+	* Caches colors for 12 hours to reduce database queries.
+	* Automatically clears cache when theme mods change.
+	*
+	* @return array Associative array of color values.
+	*/
+function funky_get_cached_theme_colors() {
+	   $cache_key = 'funky_theme_colors_' . get_stylesheet();
+	   $cached = get_transient($cache_key);
+	   
+	   if (false !== $cached) {
+	       return $cached;
+	   }
+	   
+	   $colors = funky_get_theme_colors();
+	   
+	   // Cache for 12 hours
+	   set_transient($cache_key, $colors, 12 * HOUR_IN_SECONDS);
+	   
+	   return $colors;
+}
+
+/**
+	* Clear color cache when theme mods change.
+	*/
+add_action('customize_save_after', 'funky_clear_color_cache');
+function funky_clear_color_cache() {
+	   $cache_key = 'funky_theme_colors_' . get_stylesheet();
+	   delete_transient($cache_key);
+}
+
+/**
+ * Map PHP color keys to CSS variable names.
+ *
+ * Provides abstraction layer between PHP array structure
+ * and CSS custom property names.
+ *
+ * @return array Associative array of PHP_key => CSS_variable_name
+ */
+function funky_get_color_variable_map() {
+    return array(
+        'accent_color'           => 'accent-color',
+        'background_color'       => 'background-color',
+        'header_link_color'      => 'header-link-color',
+        'heading_color'          => 'heading-color',
+        'text_color'             => 'text-color',
+        'hero_heading_color'     => 'hero-heading-color',
+        'hero_text_color'        => 'hero-text-color',
+        'header_background_color' => 'header-background-color',
+        'header_text_color'      => 'header-text-color',
+        'footer_background_color' => 'footer-background-color',
+        'footer_heading_color'   => 'footer-heading-color',
+        'footer_text_color'      => 'footer-text-color',
+        'footer_link_color'      => 'footer-link-color',
+        'button_background_color' => 'button-background-color',
+        'button_text_color'      => 'button-text-color',
+        'button_alt_background_color' => 'button-alt-background-color',
+        'button_alt_text_color'  => 'button-alt-text-color',
+    );
+}
+
+/**
+ * Get Storefront's default color values.
+ *
+ * Uses Storefront's actual default constants instead of hardcoded values.
+ *
+ * @param string $color_key The color key to get default for.
+ * @return string Default hex color value.
+ */
+function funky_get_storefront_default($color_key) {
+    $defaults = array(
+        'storefront_accent_color'            => '#7f54b3',
+        'storefront_heading_color'           => '#333333',
+        'storefront_text_color'              => '#6d6d6d',
+        'storefront_hero_heading_color'      => '#000000',
+        'storefront_hero_text_color'         => '#000000',
+        'storefront_header_background_color' => '#ffffff',
+        'storefront_header_text_color'       => '#404040',
+        'storefront_header_link_color'       => '#333333',
+        'storefront_footer_background_color' => '#f0f0f0',
+        'storefront_footer_heading_color'    => '#333333',
+        'storefront_footer_text_color'       => '#6d6d6d',
+        'storefront_footer_link_color'       => '#333333',
+        'storefront_button_background_color' => '#eeeeee',
+        'storefront_button_text_color'       => '#333333',
+        'storefront_button_alt_background_color' => '#333333',
+        'storefront_button_alt_text_color'   => '#ffffff',
+    );
+    
+    return isset($defaults[$color_key]) ? $defaults[$color_key] : '#ffffff';
 }
 
 /*
- *Product Carousel Slider Shortcode
+	*Product Carousel Slider Shortcode
  *[woo-slider card="4" num="10" sale_badge="on" rating="on" description="off" check_stock="on" id="" on_sale="off" cats=""  offset="" type="" ]
  *https://redpishi.com/wordpress-tutorials/product-carousel-slider-shortcode/
  */
@@ -247,13 +433,6 @@ function woo_slider_shortcode($atts) {
 	if (!function_exists('is_woocommerce')) {
 		return;
 	}
-
-    // Get Theme colors
-    // Accent color (already includes #)
-    $accent_color = get_theme_mod( 'storefront_accent_color', '#000000' );
-    // Background color (add # prefix)
-    $bg_color_value = get_theme_mod( 'background_color', '' );
-    $background_color = $bg_color_value ? '#' . $bg_color_value : '#FFFFFF';
 
     // Parse shortcode attributes
     $atts = shortcode_atts(array(
@@ -476,14 +655,14 @@ function woo_slider_shortcode($atts) {
         <div class="my-structure">
     		<span class="blaze-prev" aria-label="Go to previous slide">
         		<svg width="40" height="40" version="1.1" viewBox="0 0 10.583 10.583" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="5.2964" cy="5.2964" r="4.8304" style="fill:#fff;paint-order:stroke fill markers;stroke-width:.64651"/>
-                    <path d="m4.7096 3.4245 1.8579 1.8341-1.8579 1.9147" style="fill:none;paint-order:stroke fill markers;stroke-linecap:round;stroke-linejoin:round;stroke-width:.64651;stroke:#1a1a1a"/>
+                    <circle cx="5.2964" cy="5.2964" r="4.8304" style="fill:var(--storefront-background-color, #fff);paint-order:stroke fill markers;stroke-width:.64651"/>
+                    <path d="m4.7096 3.4245 1.8579 1.8341-1.8579 1.9147" style="fill:none;paint-order:stroke fill markers;stroke-linecap:round;stroke-linejoin:round;stroke-width:.64651;stroke:var(--storefront-text-color, #1a1a1a)"/>
                 </svg>
             </span>
     		<span class="blaze-next" aria-label="Go to next slide">
         		<svg width="40" height="40" version="1.1" viewBox="0 0 10.583 10.583" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="5.2964" cy="5.2964" r="4.8304" style="fill:#fff;paint-order:stroke fill markers;stroke-width:.64651"/>
-                    <path d="m4.7096 3.4245 1.8579 1.8341-1.8579 1.9147" style="fill:none;paint-order:stroke fill markers;stroke-linecap:round;stroke-linejoin:round;stroke-width:.64651;stroke:#1a1a1a"/>
+                    <circle cx="5.2964" cy="5.2964" r="4.8304" style="fill:var(--storefront-background-color, #fff);paint-order:stroke fill markers;stroke-width:.64651"/>
+                    <path d="m4.7096 3.4245 1.8579 1.8341-1.8579 1.9147" style="fill:none;paint-order:stroke fill markers;stroke-linecap:round;stroke-linejoin:round;stroke-width:.64651;stroke:var(--storefront-text-color, #1a1a1a)"/>
                 </svg>
             </span>
         </div>
@@ -516,7 +695,7 @@ function woo_slider_shortcode($atts) {
             <?php
                 if ($atts['card-details'] === 'on') {
 
-                    echo '<span class="wwo_card_details"' . 'style="background-color:' . esc_attr( $accent_color ) . ';">';
+                    echo '<span class="wwo_card_details">';
                         echo '<a class="p_title" href="' . esc_url(get_permalink()) . '">' . get_the_title() . '</a>';
 
                         // Rating
@@ -534,7 +713,7 @@ function woo_slider_shortcode($atts) {
 
                         // Add to Cart Button
                         echo sprintf(
-                            '<a href="%s" data-quantity="1" class="button add_to_cart_button ajax_add_to_cart" data-product_id="%s" rel="nofollow"'. 'style="background-color:' . esc_attr( $background_color ) . ';">%s</a>',
+                            '<a href="%s" data-quantity="1" class="button add_to_cart_button ajax_add_to_cart" data-product_id="%s" rel="nofollow">%s</a>',
                             esc_url($product->add_to_cart_url()),
                             esc_attr($product->get_id()),
                             esc_html($product->add_to_cart_text())
@@ -608,7 +787,8 @@ function woo_slider_shortcode($atts) {
                 width: 100%;
                 position: absolute;
                 inset: 0;
-                background-color: #ffffffe6;
+                background-color: var(--storefront-background-color, #ffffff);
+                opacity: 0.9;
                 justify-content: center;
                 transform: translateY(100%);
             }
@@ -663,59 +843,3 @@ function manual_url_button_shortcode($atts) {
     return $output;
 }
 add_shortcode('url-button', 'manual_url_button_shortcode');
-
-// Open Graph Shortcode
-// function open_graph_shortcode($atts) {
-//     $atts = shortcode_atts(array(
-//         'url' => 'https://website.com'
-//     ), $atts);
-//
-//     $url = esc_url($atts['url']);
-//
-//     // Create unique cache key based on URL
-//     $cache_key = 'open_graph_' . md5($url);
-//
-//     // Try to get cached version first
-//     // $cached_output = get_transient($cache_key);
-//     //
-//     // if ($cached_output !== false) {
-//     //     return $cached_output . '<!-- Cached version -->';
-//     // }
-//
-//     // If no cache, fetch from Instagram
-//     $response = wp_remote_get($url, array(
-//         'timeout' => 30,
-//         'user-agent' => 'Mozilla/5.0 (compatible; WordPress)'
-//     ));
-//
-//     if (is_wp_error($response)) {
-//         return '<!-- Error fetching profile -->';
-//     }
-//
-//     $html = wp_remote_retrieve_body($response);
-//
-//     // Extract Open Graph data
-//     preg_match('/<meta property="og:image" content="([^"]*)"/i', $html, $image);
-//     preg_match('/<meta property="og:title" content="([^"]*)"/i', $html, $title);
-//     preg_match('/<meta property="og:description" content="([^"]*)"/i', $html, $desc);
-//
-//     $output = '<a href="' . esc_url($url) . '" target="_blank" rel="noopener" class="og-preview">';
-//     if (!empty($image[1])) {
-//         $output .= '<div class="og-image"><img src="' . esc_url($image[1]) . '" alt="Link Thumbnail"></div>';
-//     }
-//     if (!empty($title)) {
-//         $clean_title = html_entity_decode($title[1]);
-//         $output .= '<h3 class="wp-block-post-title og-title">' . esc_html($clean_title) . '</h3>';
-//     }
-//     if (!empty($desc[1])) {
-//         $clean_desc = html_entity_decode($desc[1]);
-//         $output .= '<p class="main-header has-medium-font-size og-desc">' . esc_html($clean_desc) . '</p>';
-//     }
-//     $output .= '</a>';
-//
-//     // Cache for 24 hours (86400 seconds)
-//     // set_transient($cache_key, $output, 86400);
-//
-//     return $output . '<!-- Fresh fetch -->';
-// }
-// add_shortcode('open-graph', 'open_graph_shortcode');

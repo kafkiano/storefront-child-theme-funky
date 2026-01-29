@@ -19,6 +19,11 @@ Template: storefront
 /* --------------- Root Variables ----------------- */
 :root {
   --radius: 10px;
+  /* Storefront color variables injected by PHP */
+  
+  /* Contrast-safe text colors */
+  /* --text-on-accent: var(--storefront-button-alt-text-color, #ffffff);
+  --text-on-background: var(--storefront-text-color, #6d6d6d); */
 }
 
 /* --------------- Theme Customization ----------------- */
@@ -50,9 +55,116 @@ h1, h2, h3, .nav-menu li a, .site-header span  {
     border-radius: var(--radius) !important;
 }
 
-/* --------------- Mobile Navigation ----------------- */
+/* --------------- Default Mobile Navigation ----------------- */
 .storefront-handheld-footer-bar ul li.home > a:before {
 	content: "\f015";
+}
+
+/* --------------- Off-Canvas Menu ----------------- */
+/* Reposition hamburger to left side */
+button.menu-toggle {
+    float: left;
+    margin-left: 1em;
+    margin-right: 0;
+}
+
+/* Ensure toggle button is visible on all screen sizes */
+@media (min-width: 768px) {
+    .menu-toggle {
+        display: block;
+    }
+    .primary-navigation {
+        display: none;
+    }
+    /* Adjust off-canvas width for desktop */
+    .main-navigation .menu:last-child {
+        width: 350px;
+    }
+}
+
+/* Off-canvas container */
+.main-navigation {
+    position: relative;
+}
+
+/* Target handheld navigation container for off-canvas */
+.main-navigation .menu:last-child {
+    position: fixed ;
+    top: 0;
+    left: -300px; /* Hidden off-screen */
+    width: 300px;
+    height: 100vh;
+    background: var(--storefront-header-background-color, #ffffff);
+    z-index: 999;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    max-height: 100vh;
+    padding: 2em 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* Menu items */
+.main-navigation ul li {
+    display: block;
+}
+
+.main-navigation ul li a {
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+/* Override storefront's default max-height transition */
+.handheld-navigation,
+.nav-menu,
+.main-navigation div.menu > ul:not(.nav-menu) {
+    max-height: 100vh;
+    overflow: visible;
+    transition: left 0.3s ease;
+}
+
+/* When toggled, slide in */
+.main-navigation.toggled .handheld-navigation,
+.main-navigation.toggled .menu:last-child,
+#site-navigation.toggled .menu:last-child,
+.main-navigation.toggled .nav-menu {
+    left: 0;
+}
+
+/* Overlay backdrop */
+.main-navigation.toggled .off-canvas-overlay {
+    display: block;
+}
+
+.off-canvas-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 998;
+    cursor: pointer;
+}
+
+/* Hide primary navigation menu (first .menu div) */
+.main-navigation .menu:first-child {
+    display: none;
+}
+
+/* Ensure handheld navigation (last .menu div) is visible when toggled */
+.main-navigation.toggled .menu:last-child {
+    display: block;
+}
+
+/* Prevent body scroll when menu is open */
+body.menu-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
 }
 
 /* --------------- Buttons ----------------- */
@@ -161,12 +273,12 @@ button,
   border-radius: 10vh;
   display: block;
   outline: none;
-  border: 1px solid #d7d7d7;
-  background: #eaeaea;
+  border: 1px solid var(--storefront-text-color, #d7d7d7);
+  background: var(--storefront-background-color, #eaeaea);
 }
 .blaze-pagination button.active {
-  border: 2px solid gray;
-  background: gray;
+  border: 2px solid var(--storefront-accent-color, gray);
+  background: var(--storefront-accent-color, gray);
 
 }
 .blaze-pagination {
@@ -197,13 +309,15 @@ button,
   display: flex;
   flex-direction: column;
   padding: 15px;
+  background-color: var(--storefront-accent-color, #7f54b3);
+  color: var(--text-on-accent);
 }
 .woo-slider .p_title {
   font-size: 16px;
   font-weight: bold;
   margin-bottom: 10px;
   text-decoration: none;
-  color: #333;
+  color: var(--text-on-accent);
   text-align: center;
 }
 span.wwo_card_details p {
@@ -231,15 +345,16 @@ span.wwo_card_details p {
   position: absolute;
   top: 5px;
   left: 5px;
-  background: #ff6b6b;
-  color: #fff;
+  background: var(--storefront-accent-color, #ff6b6b);
+  color: var(--storefront-button-alt-text-color, #ffffff);
   padding: 5px 10px;
   border-radius: var(--radius);
   font-size: 12px;
   font-weight: bold;
 }
 .woo-slider .add_to_cart_button {
-  color: white;
+  color: var(--storefront-button-text-color, #333333);
+  background-color: var(--storefront-button-background-color, #eeeeee);
   border: none;
   padding: 8px 15px;
   border-radius: var(--radius);
@@ -249,6 +364,11 @@ span.wwo_card_details p {
   margin-top: 10px;
   transition: background 0.3s;
   text-align: center;
+}
+
+.woo-slider .add_to_cart_button:hover {
+  background-color: var(--storefront-button-alt-background-color, #333333);
+  color: var(--storefront-button-alt-text-color, #ffffff);
 }
 
 /* --------------- Instagram Profile Preview ----------------- */
@@ -266,8 +386,8 @@ span.wwo_card_details p {
 }
 
 .og-preview:hover {
-    border-color: #E1306C;
-    box-shadow: 0 2px 8px rgba(225, 48, 108, 0.2);
+    border-color: var(--storefront-accent-color, #E1306C);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--storefront-accent-color, #E1306C) 20%, transparent);
     transform: translateY(-2px);
 }
 
