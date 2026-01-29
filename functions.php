@@ -56,12 +56,72 @@ function jk_remove_storefront_header_search() {
 }
 
 /**
+ * Remove first col-full container hooks to unify header structure
+ */
+add_action( 'init', 'funky_remove_first_col_full' );
+function funky_remove_first_col_full() {
+    remove_action( 'storefront_header', 'storefront_header_container', 0 );
+    remove_action( 'storefront_header', 'storefront_header_container_close', 41 );
+}
+
+/**
  * Remove Breadcrumbs
  */
 add_action( 'init', 'bbloomer_remove_storefront_breadcrumbs' );
 function bbloomer_remove_storefront_breadcrumbs() {
    remove_action( 'storefront_before_content', 'woocommerce_breadcrumb', 10 );
 }
+
+/**
+ * Move site branding into navigation wrapper for three-column header
+ */
+add_action( 'init', 'funky_move_site_branding' );
+function funky_move_site_branding() {
+    // Remove original site branding hook
+    remove_action( 'storefront_header', 'storefront_site_branding', 20 );
+    // Remove primary navigation wrapper hooks to avoid duplication
+    remove_action( 'storefront_header', 'storefront_primary_navigation_wrapper', 42 );
+    remove_action( 'storefront_header', 'storefront_primary_navigation_wrapper_close', 68 );
+    // Remove default primary navigation hook and replace with custom
+    remove_action( 'storefront_header', 'storefront_primary_navigation', 50 );
+    add_action( 'storefront_header', 'funky_primary_navigation', 50 );
+}
+
+/**
+ * Three-column header wrapper functions
+ */
+function funky_three_column_header_wrapper() {
+    echo '<div class="storefront-primary-navigation"><div class="col-full">';
+    echo '<div class="header-three-column-grid">';
+    echo '<div class="header-column header-column-left">';
+    // Left column remains open for menu toggle at priority 50
+}
+
+function funky_close_left_column() {
+    echo '</div>'; // close left column
+    echo '<div class="header-column header-column-center">';
+    // Center column open for branding at priority 52
+}
+
+function funky_close_center_column() {
+    echo '</div>'; // close center column
+    echo '<div class="header-column header-column-right">';
+    // Right column open for cart at priority 60
+}
+
+function funky_close_right_column() {
+    echo '</div>'; // close right column
+    echo '</div>'; // close header-three-column-grid
+    echo '</div></div>'; // close col-full and storefront-primary-navigation
+}
+
+// Add custom three-column header structure
+add_action( 'storefront_header', 'funky_three_column_header_wrapper', 42 );
+add_action( 'storefront_header', 'funky_close_left_column', 51 );
+add_action( 'storefront_header', 'funky_close_center_column', 53 );
+add_action( 'storefront_header', 'funky_close_right_column', 61 );
+// Re-add site branding at priority 52 (after center column opens)
+add_action( 'storefront_header', 'storefront_site_branding', 52 );
 
 /**
  * Remove the Storefront Theme Copyright Link “Built with Storefront”
@@ -397,25 +457,23 @@ function funky_get_storefront_default($color_key) {
  * Override Storefront's primary navigation to output only handheld menu
  * when off-canvas mode is active, eliminating duplicate menu elements
  */
-if ( ! function_exists( 'storefront_primary_navigation' ) ) {
-    function storefront_primary_navigation() {
-        ?>
-        <nav id="site-navigation" class="main-navigation" role="navigation" aria-label="<?php esc_attr_e( 'Primary Navigation', 'storefront' ); ?>">
-          <button id="site-navigation-menu-toggle" class="menu-toggle" aria-controls="site-navigation" aria-expanded="false"><span><?php echo esc_html( apply_filters( 'storefront_menu_toggle_text', __( 'Menu', 'storefront' ) ) ); ?></span></button>
-            <?php
-            // Output only handheld navigation for off-canvas menu
-            wp_nav_menu(
-                array(
-                    'theme_location'  => 'handheld',
-                    'container_class' => 'handheld-navigation',
-                    'menu_class'      => 'off-canvas-menu', // Add semantic class
-                )
-            );
-            ?>
-          <div class="off-canvas-overlay" aria-hidden="false" role="presentation"></div>
-        </nav><!-- #site-navigation -->
-        <?php
-    }
+function funky_primary_navigation() {
+    ?>
+    <button id="site-navigation-menu-toggle" class="menu-toggle" aria-controls="site-navigation" aria-expanded="false">
+        <span><?php echo esc_html( apply_filters( 'storefront_menu_toggle_text', __( 'Menu', 'storefront' ) ) ); ?></span>
+    </button>
+    <?php
+    // Off-canvas menu structure (keeps existing off-canvas implementation)
+    wp_nav_menu(
+        array(
+            'theme_location'  => 'handheld',
+            'container_class' => 'handheld-navigation',
+            'menu_class'      => 'off-canvas-menu',
+        )
+    );
+    ?>
+    <div class="off-canvas-overlay" aria-hidden="false" role="presentation"></div>
+    <?php
 }
 
 /*
