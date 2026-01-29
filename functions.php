@@ -459,20 +459,22 @@ function funky_get_storefront_default($color_key) {
  */
 function funky_primary_navigation() {
     ?>
-    <button id="site-navigation-menu-toggle" class="menu-toggle" aria-controls="site-navigation" aria-expanded="false">
-        <span><?php echo esc_html( apply_filters( 'storefront_menu_toggle_text', __( 'Menu', 'storefront' ) ) ); ?></span>
-    </button>
-    <?php
-    // Off-canvas menu structure (keeps existing off-canvas implementation)
-    wp_nav_menu(
-        array(
-            'theme_location'  => 'handheld',
-            'container_class' => 'handheld-navigation',
-            'menu_class'      => 'off-canvas-menu',
-        )
-    );
-    ?>
-    <div class="off-canvas-overlay" aria-hidden="false" role="presentation"></div>
+    <nav id="site-navigation" class="main-navigation" role="navigation" aria-label="Primary Navigation">
+        <button id="site-navigation-menu-toggle" class="menu-toggle" aria-controls="site-navigation" aria-expanded="false">
+            <span><?php echo esc_html( apply_filters( 'storefront_menu_toggle_text', __( 'Menu', 'storefront' ) ) ); ?></span>
+        </button>
+        <?php
+        // Off-canvas menu structure (keeps existing off-canvas implementation)
+        wp_nav_menu(
+            array(
+                'theme_location'  => 'handheld',
+                'container_class' => 'handheld-navigation',
+                'menu_class'      => 'off-canvas-menu',
+            )
+        );
+        ?>
+        <div class="off-canvas-overlay" aria-hidden="false" role="presentation"></div>
+    </nav>
     <?php
 }
 
