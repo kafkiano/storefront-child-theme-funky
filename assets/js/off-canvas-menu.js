@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create anchor menu items
         anchors.forEach(anchor => {
             const listItem = document.createElement('li');
-            listItem.className = 'page_item';
+            listItem.className = 'anchor-menu-item';
             
             const anchorLink = document.createElement('a');
             anchorLink.href = `#${anchor.id}`;
@@ -203,24 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add sub-menu to current page item
         currentPageItem.appendChild(subMenu);
-        
-        // Add toggle button for mobile (optional)
-        if (window.innerWidth <= 768) {
-            const toggleButton = document.createElement('button');
-            toggleButton.className = 'anchor-toggle';
-            toggleButton.innerHTML = '<span class="screen-reader-text">Toggle anchor menu</span>';
-            toggleButton.setAttribute('aria-expanded', 'false');
-            
-            toggleButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const expanded = this.getAttribute('aria-expanded') === 'true';
-                this.setAttribute('aria-expanded', !expanded);
-                subMenu.style.display = expanded ? 'none' : 'block';
-            });
-            
-            currentPageItem.querySelector('a').after(toggleButton);
-        }
+
     }
 
     /**
