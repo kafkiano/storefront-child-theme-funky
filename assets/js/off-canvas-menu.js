@@ -1,6 +1,7 @@
 /**
  * Off-canvas menu functionality for Storefront Child Theme
- * Pure CSS overlay with JavaScript for accessibility and body scroll lock
+ * Pure CSS overlay with JavaScript for accessibility, body scroll lock,
+ * and dynamic anchor sub-menu injection
  */
 document.addEventListener('DOMContentLoaded', function() {
     const nav = document.querySelector('#site-navigation');
@@ -17,6 +18,276 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn('Off-canvas menu: .off-canvas-overlay not found');
         return;
     }
+
+    // Get off-canvas menu container
+    const offCanvasMenu = document.querySelector('.off-canvas-menu');
+    if (!offCanvasMenu) {
+        console.warn('Off-canvas menu: .off-canvas-menu not found');
+        return;
+    }
+
+    // --- Anchor Detection and Injection ---
+    
+    /**
+     * Normalize hostname for comparison (convert loopback addresses to localhost)
+     * @param {string} hostname
+     * @returns {string} Normalized hostname
+     */
+    function normalizeHost(hostname) {
+        if (hostname === '127.0.0.1' || hostname === '0.0.0.0' || hostname === '::1') {
+            return 'localhost';
+        }
+        return hostname;
+    }
+
+    /**
+     * Extract base URL without hash or query parameters, with host normalization
+     * @param {string} url - Full URL
+     * @returns {string} Base URL
+     */
+    function getBaseUrl(url) {
+        try {
+            const urlObj = new URL(url, window.location.origin);
+            // Normalize hostname for loopback addresses
+            const normalizedHost = normalizeHost(urlObj.hostname);
+            // Reconstruct origin with normalized hostname
+            const normalizedOrigin = `${urlObj.protocol}//${normalizedHost}${urlObj.port ? ':' + urlObj.port : ''}`;
+            return normalizedOrigin + urlObj.pathname;
+        } catch (e) {
+            // Fallback for relative URLs
+            return url.split('#')[0].split('?')[0];
+        }
+    }
+
+    /**
+     * Get current page base URL (without hash/query)
+     * @returns {string} Current page base URL
+     */
+    function getCurrentBaseUrl() {
+        return getBaseUrl(window.location.href);
+    }
+
+    /**
+     * Detect anchor elements within .entry-content
+     * @returns {Array} Array of {id, label} objects
+     */
+    function detectPageAnchors() {
+        const anchors = [];
+        const entryContent = document.querySelector('.entry-content');
+        
+        if (!entryContent) {
+            console.warn('Anchor detection: .entry-content not found');
+            return anchors;
+        }
+
+        // Find all elements with id attributes within .entry-content
+        const elementsWithId = entryContent.querySelectorAll('[id]');
+        
+        // Common IDs to exclude (WordPress/WooCommerce system IDs)
+        const excludePatterns = [
+            '^comments$', '^respond$', '^wp-', '^comment-',
+            '^tab-', '^accordion-', '^toggle-', '^product-',
+            '^post-', '^attachment_', '^caption-', '^carousel-'
+        ];
+        
+        elementsWithId.forEach(element => {
+            const id = element.id;
+            
+            // Skip empty or invalid IDs
+            if (!id || id.trim() === '') return;
+            
+            // Check against exclusion patterns
+            const shouldExclude = excludePatterns.some(pattern => {
+                const regex = new RegExp(pattern);
+                return regex.test(id);
+            });
+            
+            if (shouldExclude) return;
+            
+            // Generate label from element content or ID
+            let label = id;
+            
+            // Try to get text from heading elements
+            if (element.tagName.match(/^H[1-6]$/i)) {
+                label = element.textContent.trim();
+            } 
+            // Try to get from data-label attribute
+            else if (element.dataset.label) {
+                label = element.dataset.label;
+            }
+            // Try to get from aria-label
+            else if (element.getAttribute('aria-label')) {
+                label = element.getAttribute('aria-label');
+            }
+            // Humanize the ID (convert "my-slider" to "My Slider")
+            else {
+                label = id.replace(/[-_]/g, ' ')
+                         .replace(/\b\w/g, char => char.toUpperCase())
+                         .trim();
+            }
+            
+            // Limit label length
+            if (label.length > 50) {
+                label = label.substring(0, 47) + '...';
+            }
+            
+            anchors.push({ id, label, element: element.tagName });
+        });
+        
+        return anchors;
+    }
+
+    /**
+     * Inject anchor sub-menu into current page menu item
+     * @param {Array} anchors - Array of anchor objects
+     */
+    function injectAnchorSubMenu(anchors) {
+        if (anchors.length === 0) return;
+        
+        // Find the current page menu item using WordPress's .current_page_item class
+        let currentPageItem = offCanvasMenu.querySelector('.current_page_item');
+        
+        if (!currentPageItem) {
+            // Fallback to URL matching for edge cases
+            const currentBaseUrl = getCurrentBaseUrl();
+            const menuLinks = offCanvasMenu.querySelectorAll('a');
+            
+            menuLinks.forEach(link => {
+                const linkUrl = link.getAttribute('href');
+                if (!linkUrl) return;
+                
+                const linkBaseUrl = getBaseUrl(linkUrl);
+                
+                if (linkBaseUrl === currentBaseUrl) {
+                    currentPageItem = link.closest('li');
+                }
+            });
+        }
+        
+        if (!currentPageItem) {
+            console.warn('Anchor injection: current_page_item not found');
+            return;
+        }
+        
+        // Check if anchor sub-menu already exists
+        const existingSubMenu = currentPageItem.querySelector('.anchor-submenu');
+        if (existingSubMenu) {
+            existingSubMenu.remove(); // Remove and regenerate
+        }
+        
+        // Create sub-menu container
+        const subMenu = document.createElement('ul');
+        subMenu.setAttribute('aria-label', 'Page sections');
+        
+        // Create anchor menu items
+        anchors.forEach(anchor => {
+            const listItem = document.createElement('li');
+            listItem.className = 'page_item';
+            
+            const anchorLink = document.createElement('a');
+            anchorLink.href = `#${anchor.id}`;
+            anchorLink.textContent = anchor.label;
+            anchorLink.setAttribute('data-anchor-id', anchor.id);
+            anchorLink.setAttribute('data-scroll', 'smooth');
+            
+            // Add icon or indicator
+            const icon = document.createElement('span');
+            icon.className = 'anchor-icon';
+            icon.innerHTML = '↳ ';
+            icon.setAttribute('aria-hidden', 'true');
+            
+            anchorLink.prepend(icon);
+            listItem.appendChild(anchorLink);
+            subMenu.appendChild(listItem);
+        });
+        
+        // Add sub-menu to current page item
+        currentPageItem.appendChild(subMenu);
+        
+        // Add toggle button for mobile (optional)
+        if (window.innerWidth <= 768) {
+            const toggleButton = document.createElement('button');
+            toggleButton.className = 'anchor-toggle';
+            toggleButton.innerHTML = '<span class="screen-reader-text">Toggle anchor menu</span>';
+            toggleButton.setAttribute('aria-expanded', 'false');
+            
+            toggleButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const expanded = this.getAttribute('aria-expanded') === 'true';
+                this.setAttribute('aria-expanded', !expanded);
+                subMenu.style.display = expanded ? 'none' : 'block';
+            });
+            
+            currentPageItem.querySelector('a').after(toggleButton);
+        }
+    }
+
+    /**
+     * Handle anchor link clicks with smooth scrolling
+     * @param {Event} e - Click event
+     */
+    function handleAnchorClick(e) {
+        const link = e.target.closest('a');
+        if (!link) return;
+        
+        const href = link.getAttribute('href');
+        if (!href) return;
+        
+        // Handle anchor links (both #anchor and full URLs with #)
+        if (href.includes('#')) {
+            const isSamePageAnchor = href.startsWith('#') || 
+                                    getBaseUrl(href) === getCurrentBaseUrl();
+            
+            if (isSamePageAnchor) {
+                e.preventDefault();
+                
+                // Close off-canvas menu
+                nav.classList.remove('toggled');
+                updateMenuState();
+                
+                // Extract anchor ID
+                const anchorId = href.split('#')[1];
+                if (!anchorId) return;
+                
+                // Find target element
+                const targetElement = document.getElementById(anchorId);
+                if (targetElement) {
+                    // Smooth scroll to anchor
+                    setTimeout(() => {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                            inline: 'nearest'
+                        });
+                        
+                        // Update URL hash without page jump
+                        history.pushState(null, null, `#${anchorId}`);
+                    }, 300); // Wait for menu animation
+                }
+            }
+        }
+    }
+
+    /**
+     * Initialize anchor detection and injection
+     */
+    function initAnchorNavigation() {
+        const anchors = detectPageAnchors();
+        
+        if (anchors.length > 0) {
+            console.log(`Found ${anchors.length} page anchors:`, anchors.map(a => a.id));
+            injectAnchorSubMenu(anchors);
+            
+            // Add click handlers to anchor links
+            const anchorLinks = offCanvasMenu.querySelectorAll('.anchor-submenu a');
+            anchorLinks.forEach(link => {
+                link.addEventListener('click', handleAnchorClick);
+            });
+        }
+    }
+
+    // --- Existing Off-Canvas Functionality ---
     
     // Function to update accessibility and body scroll
     function updateMenuState() {
@@ -31,10 +302,13 @@ document.addEventListener('DOMContentLoaded', function() {
             overlay.setAttribute('aria-hidden', 'true');
         }
     }
-    
+
     // Initial sync
     updateMenuState();
     
+    // Initialize anchor navigation
+    initAnchorNavigation();
+
     // Observe class changes on nav to keep accessibility in sync
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
@@ -44,14 +318,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     observer.observe(nav, { attributes: true });
-    
+
     // Close menu when clicking overlay
     overlay.addEventListener('click', function() {
         nav.classList.remove('toggled');
         // Storefront's navigation.js will update aria-expanded
         updateMenuState();
     });
-    
+
     // Close menu when pressing Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && nav.classList.contains('toggled')) {
@@ -59,7 +333,36 @@ document.addEventListener('DOMContentLoaded', function() {
             updateMenuState();
         }
     });
+
+    // Handle all menu clicks (delegated)
+    offCanvasMenu.addEventListener('click', function(e) {
+        // Let handleAnchorClick handle anchor links
+        if (e.target.closest('a[href*="#"]')) {
+            handleAnchorClick(e);
+        }
+    });
+
+    // Re-inject anchors on AJAX content load (if needed)
+    const contentObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                // Check if .entry-content was modified
+                const hasEntryContent = Array.from(mutation.addedNodes).some(node => {
+                    return node.nodeType === 1 && 
+                          (node.classList.contains('entry-content') || 
+                           node.querySelector('.entry-content'));
+                });
+                
+                if (hasEntryContent) {
+                    setTimeout(initAnchorNavigation, 100); // Wait for DOM stabilization
+                }
+            }
+        });
+    });
     
-    // Note: Overlay visibility is handled entirely by CSS
-    // (opacity/visibility transitions based on .main-navigation.toggled)
+    // Observe body for content changes
+    contentObserver.observe(document.body, { 
+        childList: true, 
+        subtree: true 
+    });
 });
