@@ -273,8 +273,10 @@ body.menu-open {
     position: initial;
 }
 
-.anchor-menu-item {
-  padding-left: 1.4em;
+@media (min-width: 768px) {
+    .anchor-menu-item {
+        padding-left: 1.41575em;
+    }
 }
 
 .anchor-menu-item a {
