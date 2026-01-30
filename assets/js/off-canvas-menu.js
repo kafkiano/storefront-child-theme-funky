@@ -81,7 +81,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Find all elements with id attributes within .entry-content
-        const elementsWithId = entryContent.querySelectorAll('[id]');
+        // Select ONLY direct children of .entry-content with IDs
+        const elementsWithId = entryContent.querySelectorAll('.entry-content > [id]');
         
         // Common IDs to exclude (WordPress/WooCommerce system IDs)
         const excludePatterns = [
