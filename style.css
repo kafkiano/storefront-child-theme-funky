@@ -234,8 +234,8 @@ button.menu-toggle {
 
 @media (max-width: 768px) {
     .off-canvas-menu {
-        left: -50vw;
-        width: 50vw;
+        left: -80vw;
+        width: 80vw;
     }
 }
 
