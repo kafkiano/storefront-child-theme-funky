@@ -269,6 +269,7 @@ body.menu-open {
 
 /* --- Anchor Sub-Menu Styles --- */
 .off-canvas-menu ul ul {
+    display: block !important;
     float: unset;
     position: initial;
 }
